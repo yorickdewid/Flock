@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-func listenForJobs() {
+func acceptNewJobs() {
 	log.Print("Waiting for jobs on :44087")
 	log.Fatal(http.ListenAndServe(":44087", RESTService()))
 }
 
 func main() {
-	listenForJobs()
+	acceptNewJobs()
 }
