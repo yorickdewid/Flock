@@ -3,6 +3,14 @@ package main
 import "time"
 import "github.com/google/uuid"
 
+// Task model
+type Task struct {
+	UUID      uuid.UUID `json:"uuid"`
+	Command   string    `json:"command"`
+	Arguments []string  `json:"arguments"`
+	Completed bool      `json:"completed"`
+}
+
 // Job model
 type Job struct {
 	UUID      uuid.UUID `json:"uuid"`
@@ -15,4 +23,5 @@ type Job struct {
 	Submitted time.Time `json:"submitted"`
 	Updated   time.Time `json:"updated"`
 	Content   []byte    `json:"content"`
+	Tasks     []Task    `json:"tasks"`
 }
