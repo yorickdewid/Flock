@@ -1,10 +1,11 @@
 package main
 
 import "time"
+import "github.com/google/uuid"
 
 // Job model
 type Job struct {
-	UUID      string    `json:"uuid"`
+	UUID      uuid.UUID `json:"uuid"`
 	Name      string    `json:"name"`
 	Priority  int8      `json:"priority"`
 	Status    string    `json:"status"`

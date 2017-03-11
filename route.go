@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -15,21 +17,35 @@ type Route struct {
 
 type Routes []Route
 
-var routes = Routes{
-	Route{"Index", "GET", "/", Index},
-	Route{"TodoIndex", "GET", "/todos", TodoIndex},
-	Route{"TodoShow", "GET", "/todos/{todoId}", TodoShow},
+func RequestHandler(inner http.Handler, name string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		w.Header().Add("Server", "Flock/0.1")
+
+		inner.ServeHTTP(w, r)
+
+		log.Printf(
+			"%s\t%s\t%s\t%s",
+			r.Method,
+			r.RequestURI,
+			name,
+			time.Since(start),
+		)
+	})
 }
 
 func RESTService() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	// router.NotFoundHandler(NotFound)
+
 	for _, route := range routes {
+		var handler = RequestHandler(route.HandlerFunc, route.Name)
+
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			Handler(route.HandlerFunc)
+			Handler(handler)
 	}
 
 	return router
