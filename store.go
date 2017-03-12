@@ -19,23 +19,34 @@ func setupStore() {
 	}
 	defer db.Close()
 
-	sqlStmt := `
-	CREATE TABLE meta (id INTEGER NOT NULL PRIMARY KEY, name TEXT);
-	CREATE TABLE queue (name TEXT PRIMARY KEY);
-	CREATE TABLE tasks (id TEXT PRIMARY KEY, queue TEXT,
+	_, err = db.Exec(`
+	CREATE TABLE queue (name TEXT PRIMARY KEY NOT NULL,
+						can_remove INT DEFAULT 1,
+						jobs_count INT DEFAULT 0,
+						jobs_done INT DEFAULT 0,
+						jobs_await INT DEFAULT 0,
+						jobs_failed INT DEFAULT 0);
+	CREATE TABLE job (id TEXT PRIMARY KEY NOT NULL,
+						queue TEXT NOT NULL,
 						name TEXT,
+						version TEXT,
+						status TEXT,
+						owner TEXT,
 						priority INT,
-						created_at DATETIME,
+						completed INT DEFAULT 0,
+						content_file TEXT,
+						submitted_at DATETIME,
 						updated_at TIMESTAMP);
-	CREATE TABLE jobs (id TEXT PRIMARY KEY, queue TEXT,
+	CREATE TABLE task (id TEXT PRIMARY KEY NOT NULL,
+						job TEXT NOT NULL,
+						command TEXT,
 						name TEXT,
-						priority INT,
-						created_at DATETIME,
-						updated_at TIMESTAMP);
-	`
-	_, err = db.Exec(sqlStmt)
+						arguments TEXT,
+						completed INT DEFAULT 0);
+	INSERT INTO queue ('name','can_remove') VALUES ('main',0);
+	`)
 	if err != nil {
-		log.Printf("%q: %s\n", err, sqlStmt)
+		log.Printf("Create database error: %q\n", err)
 		return
 	}
 }

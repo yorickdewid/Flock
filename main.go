@@ -9,7 +9,7 @@ import (
 
 const (
 	build   = "none"
-	version = "dev-build"
+	version = "1.0.0-dev"
 )
 
 func acceptNewJobs(port *string) {

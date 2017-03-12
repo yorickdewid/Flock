@@ -24,7 +24,7 @@ type Route struct {
 var routes = []Route{
 	Route{"root", "GET", "/", EndpointRoot},
 	Route{"submit", "GET", "/v1/queue.main/submit", TodoIndex},
-	Route{"SubmitJob", "POST", "/v1/queue.main/new", TodoCreate},
+	Route{"SubmitJob", "POST", "/v1/queue.{queue}/submit", TodoCreate},
 	Route{"TodoShow", "GET", "/v1/queue.main/{todoId}", TodoShow},
 }
 
@@ -38,7 +38,7 @@ func EndpointRoot(w http.ResponseWriter, r *http.Request) {
 		Endpoint        []string `json:"endpoint"`
 	}{
 		"Flock - Message queue",
-		"1.0.0",
+		version,
 		true,
 		1,
 		[]string{
@@ -47,8 +47,12 @@ func EndpointRoot(w http.ResponseWriter, r *http.Request) {
 			"/v1/queue/remove",
 			"/v1/queue.{queue}/submit",
 			"/v1/queue.{queue}/purge",
-			"/v1/queue.{queue}/{uuid}",
+			"/v1/queue.{queue}/fetch",
 			"/v1/queue.{queue}/status",
+			"/v1/job.{uuid}/status",
+			"/v1/job.{uuid}/cancel",
+			"/v1/task.{uuid}/status",
+			"/v1/task.{uuid}/cancel",
 		},
 	})
 }
