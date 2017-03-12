@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 const (
@@ -12,10 +13,26 @@ const (
 	version = "1.0.0-dev"
 )
 
+var (
+	verbose bool
+)
+
 func acceptNewJobs(port *string) {
 	setupStore()
+
+	if verbose {
+		log.Print("Running verbose mode")
+	}
+
+	srv := &http.Server{
+		Handler:      RESTService(),
+		Addr:         ":" + *port,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
+	}
+
 	log.Print("Waiting for jobs on :" + *port)
-	log.Fatal(http.ListenAndServe(":"+*port, RESTService()))
+	log.Fatal(srv.ListenAndServe())
 }
 
 func printHelp() {
@@ -31,7 +48,7 @@ func main() {
 	var versionFlag = flag.Bool("v", false, "output version information and exit")
 	var helpFlag = flag.Bool("h", false, "display this help dialog")
 	var portFlag = flag.String("p", "44087", "daemon port")
-	// var configFlag = flag.String("c", "", "config file")
+	var verboseFlag = flag.Bool("V", true, "verbose output")
 	flag.Parse()
 
 	if *versionFlag {
@@ -44,5 +61,6 @@ func main() {
 		return
 	}
 
+	verbose = *verboseFlag
 	acceptNewJobs(portFlag)
 }

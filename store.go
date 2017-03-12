@@ -9,16 +9,18 @@ import (
 )
 
 func setupStore() {
+	// Bail if store exists
 	if _, err := os.Stat("job.store"); err == nil {
 		return
 	}
 
 	db, err := sql.Open("sqlite3", "job.store")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 
+	log.Print("Setup datastore")
 	_, err = db.Exec(`
 	CREATE TABLE queue (name TEXT PRIMARY KEY NOT NULL,
 						can_remove INT DEFAULT 1,
