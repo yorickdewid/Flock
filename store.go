@@ -2,13 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func setupStore() {
+func SetupStore() {
 	// Bail if store exists
 	if _, err := os.Stat("job.store"); err == nil {
 		return
@@ -34,7 +35,7 @@ func setupStore() {
 						version TEXT,
 						status TEXT,
 						owner TEXT,
-						priority INT,
+						priority INT DEFAULT 10,
 						completed INT DEFAULT 0,
 						content_file TEXT,
 						submitted_at DATETIME,
@@ -53,24 +54,27 @@ func setupStore() {
 	}
 }
 
-/*
-func kaas() {
+func StoreNewJob() {
 	db, err := sql.Open("sqlite3", "job.store")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 
-	sqlStmt := `
-	create table foo (id integer not null primary key, name text);
-	delete from foo;
-	`
-	_, err = db.Exec(sqlStmt)
+	stmt, err := db.Prepare("INSERT INTO job (id,queue,name,submitted_at) VALUES (?, ?, ?, DATETIME('now'));")
 	if err != nil {
-		log.Printf("%q: %s\n", err, sqlStmt)
-		return
+		log.Fatal(err)
 	}
+	defer stmt.Close()
 
+	var name string
+	if _, err := stmt.Exec("f6146500-f0ce-49a5-af1a-c0525ea0ced7", "main", "SomeJob"); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(name)
+}
+
+/*
 	////
 	tx, err := db.Begin()
 	if err != nil {

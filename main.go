@@ -18,7 +18,7 @@ var (
 )
 
 func acceptNewJobs(port *string) {
-	setupStore()
+	SetupStore()
 
 	if verbose {
 		log.Print("Running verbose mode")

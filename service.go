@@ -53,7 +53,7 @@ func v1JobStatus(w http.ResponseWriter, r *http.Request) {
 		Owner:     "MAIN",
 		Submitted: time.Now(),
 	}
-
+	StoreNewJob()
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if err := json.NewEncoder(w).Encode(job); err != nil {
 		panic(err)
@@ -86,6 +86,7 @@ func v1JobSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// t := RepoCreateTodo(job)
+	StoreNewJob()
 	w.WriteHeader(http.StatusCreated)
 }
 
