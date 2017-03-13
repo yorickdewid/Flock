@@ -43,7 +43,7 @@ func v1JobStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//TODO: Mock return
-	job := Job{
+	job := &Job{
 		UUID:      id,
 		Name:      "Some job",
 		Version:   1,
@@ -53,7 +53,7 @@ func v1JobStatus(w http.ResponseWriter, r *http.Request) {
 		Owner:     "MAIN",
 		Submitted: time.Now(),
 	}
-	StoreNewJob()
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if err := json.NewEncoder(w).Encode(job); err != nil {
 		panic(err)
@@ -86,8 +86,23 @@ func v1JobSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// t := RepoCreateTodo(job)
-	StoreNewJob()
+	// StoreNewJob()
+
+	// log.Print("heiro")
+	// EndpointError(w, &ServiceError{
+	// 	Message:   "Something false",
+	// 	Solution:  "Make it true",
+	// 	ErrorCode: http.StatusBadRequest,
+	// })
+	// return
+
 	w.WriteHeader(http.StatusCreated)
+}
+
+// EndpointError returns an error structure
+func EndpointError(w http.ResponseWriter, e *ServiceError) {
+	w.WriteHeader(e.ErrorCode)
+	json.NewEncoder(w).Encode(e)
 }
 
 // EndpointRoot returns status and info
@@ -132,25 +147,38 @@ func v1EndpointList(w http.ResponseWriter, r *http.Request) {
 
 // NotFound returns notfound erndpoint
 func NotFound(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(404)
+	w.WriteHeader(http.StatusNotFound)
 	json.NewEncoder(w).Encode(&ServiceError{
 		Message:   "Endpoint not found",
 		Solution:  "See / for possible directives",
-		ErrorCode: 404,
+		ErrorCode: http.StatusNotFound,
 	})
 }
 
 // RequestHandler logs requires and appends required headers
-func RequestHandler(inner http.Handler, name string) http.Handler {
+func RequestHandler(inner http.Handler, name string, method string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		err := false
 
 		// Set server header
 		w.Header().Add("Server", "Flock/"+version)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
+		if r.Method != method {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			json.NewEncoder(w).Encode(&ServiceError{
+				Message:   "Endpoint does not accept method",
+				Solution:  "Change HTTP method",
+				ErrorCode: http.StatusMethodNotAllowed,
+			})
+			err = true
+		}
+
 		// Serve reponse
-		inner.ServeHTTP(w, r)
+		if !err {
+			inner.ServeHTTP(w, r)
+		}
 
 		if verbose {
 			log.Printf("%s -> %s\t%s\t%s\t%s",
@@ -170,10 +198,9 @@ func RESTService() *mux.Router {
 	router.NotFoundHandler = http.HandlerFunc(NotFound)
 
 	for _, route := range routes {
-		var handler = RequestHandler(route.HandlerFunc, route.Name)
+		var handler = RequestHandler(route.HandlerFunc, route.Name, route.Method)
 
 		router.
-			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
