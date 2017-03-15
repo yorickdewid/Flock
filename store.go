@@ -10,11 +10,11 @@ import (
 )
 
 type Queue struct {
-	Name       string
-	JobCount   int
-	JobsDone   int
-	JobsAwait  int
-	JobsFailed int
+	Name       string `json:"name"`
+	JobsCount  int    `json:"jobs_count"`
+	JobsDone   int    `json:"jobs_done"`
+	JobsAwait  int    `json:"jobs_await"`
+	JobsFailed int    `json:"jobs_failed"`
 }
 
 func SetupStore() {
@@ -82,7 +82,7 @@ func StoreNewJob() {
 	fmt.Println(name)
 }
 
-func StoreQueueList() []Queue {
+func StoreQueueList() *[]Queue {
 	db, err := sql.Open("sqlite3", "job.store")
 	if err != nil {
 		log.Fatal(err)
@@ -98,13 +98,12 @@ func StoreQueueList() []Queue {
 	var queueList []Queue
 	for rows.Next() {
 		var queue Queue
-		err = rows.Scan(&queue.Name, &queue.JobCount, &queue.JobsDone, &queue.JobsAwait, &queue.JobsFailed)
+		err = rows.Scan(&queue.Name, &queue.JobsCount, &queue.JobsDone, &queue.JobsAwait, &queue.JobsFailed)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		queueList = append(queueList, queue)
-		fmt.Println(len(queueList))
 	}
 
 	err = rows.Err()
@@ -112,7 +111,7 @@ func StoreQueueList() []Queue {
 		log.Fatal(err)
 	}
 
-	return queueList
+	return &queueList
 }
 
 /*

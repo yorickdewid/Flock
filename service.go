@@ -40,13 +40,11 @@ var routes = []Route{
 }
 
 func v1QueueList(w http.ResponseWriter, r *http.Request) {
-	// list := StoreQueueList()
-	StoreQueueList()
+	list := StoreQueueList()
 
-	// if err := json.NewEncoder(w).Encode(job); err != nil {
-	// 	panic(err)
-	// }
-	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(list); err != nil {
+		panic(err)
+	}
 }
 
 func v1JobStatus(w http.ResponseWriter, r *http.Request) {
