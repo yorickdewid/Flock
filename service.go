@@ -1,3 +1,13 @@
+//
+// Copyright (C) 2017 Quenza Inc.
+// All Rights Reserved
+//
+// This file is part of the Flock project.
+//
+// Content can not be copied and/or distributed without the express
+// permission of the author.
+//
+
 package main
 
 import (
@@ -33,6 +43,7 @@ var routes = []Route{
 	Route{"v1.root", "GET", "/v1/", v1EndpointList},
 
 	Route{"v1.queue.list", "GET", "/v1/queue/list", v1QueueList},
+	Route{"v1.queue.list", "POST", "/v1/queue/create", v1QueueCreate},
 
 	Route{"v1.job.status", "GET", "/v1/queue.{queue}/status", v1JobStatus},
 	Route{"SubmitJob", "POST", "/v1/queue.{queue}/submit", v1JobSubmit},
@@ -43,7 +54,43 @@ func v1QueueList(w http.ResponseWriter, r *http.Request) {
 	list := StoreQueueList()
 
 	if err := json.NewEncoder(w).Encode(list); err != nil {
+		EndpointError(w, &ServiceError{
+			Message:   "Object marshal unsuppported type",
+			Solution:  "File bug report",
+			ErrorCode: http.StatusInternalServerError,
+		})
+		log.Print("FATAL: ", err)
+		return
+	}
+}
+
+func v1QueueCreate(w http.ResponseWriter, r *http.Request) {
+	var queue Queue
+
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 128))
+	if err != nil {
 		panic(err)
+	}
+
+	if err := r.Body.Close(); err != nil {
+		panic(err)
+	}
+
+	if err := json.Unmarshal(body, &job); err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		if err := json.NewEncoder(w).Encode(err); err != nil {
+			panic(err)
+		}
+	}
+
+	if err := json.NewEncoder(w).Encode(list); err != nil {
+		EndpointError(w, &ServiceError{
+			Message:   "Object marshal unsuppported type",
+			Solution:  "File bug report",
+			ErrorCode: http.StatusInternalServerError,
+		})
+		log.Print("FATAL: ", err)
+		return
 	}
 }
 
@@ -146,7 +193,6 @@ func v1EndpointList(w http.ResponseWriter, r *http.Request) {
 			"/v1/queue.{queue}/submit",
 			"/v1/queue.{queue}/purge",
 			"/v1/queue.{queue}/fetch",
-			"/v1/queue.{queue}/status",
 			"/v1/job.{uuid}/status",
 			"/v1/job.{uuid}/cancel",
 			"/v1/task.{uuid}/status",

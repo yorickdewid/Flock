@@ -1,3 +1,13 @@
+//
+// Copyright (C) 2017 Quenza Inc.
+// All Rights Reserved
+//
+// This file is part of the Flock project.
+//
+// Content can not be copied and/or distributed without the express
+// permission of the author.
+//
+
 package main
 
 import "time"
