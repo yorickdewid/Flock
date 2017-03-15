@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -79,7 +80,7 @@ func StoreNewJob() {
 	}
 	defer db.Close()
 
-	stmt, err := db.Prepare("INSERT INTO job (id,queue,name,submitted_at) VALUES (?, ?, ?, DATETIME('now'));")
+	stmt, err := db.Prepare("INSERT INTO job (id,queue,name,submitted_at) VALUES (?, ?, ?, DATETIME('now'))")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,6 +123,52 @@ func StoreQueueList() *[]Queue {
 	}
 
 	return &queueList
+}
+
+func StoreQueueCreate(queue *Queue) error {
+	db, err := sql.Open("sqlite3", "job.store")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Check empty input
+	queue.Name = strings.ToLower(strings.TrimSpace(queue.Name))
+	if len(queue.Name) == 0 {
+		return &ServiceError{
+			Message:  "Name is empty",
+			Solution: "Supply a name",
+		}
+	}
+
+	// Check existing name
+	row := db.QueryRow("SELECT 1 FROM queue WHERE name=? LIMIT 1", queue.Name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var count int
+	row.Scan(&count)
+	if count > 0 {
+		return &ServiceError{
+			Message:  "Name already exists",
+			Solution: "Rename input object",
+		}
+	}
+
+	stmt, err := db.Prepare("INSERT INTO queue (name) VALUES (?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.Exec(queue.Name); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("New queue: ", queue.Name)
+
+	return err
 }
 
 /*

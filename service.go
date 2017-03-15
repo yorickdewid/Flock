@@ -12,6 +12,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -36,6 +37,10 @@ type ServiceError struct {
 	ErrorCode int    `json:"error_code"`
 }
 
+func (e *ServiceError) Error() string {
+	return fmt.Sprint(e.Message)
+}
+
 var routes = []Route{
 	Route{"root", "GET", "/", EndpointRoot},
 
@@ -54,13 +59,7 @@ func v1QueueList(w http.ResponseWriter, r *http.Request) {
 	list := StoreQueueList()
 
 	if err := json.NewEncoder(w).Encode(list); err != nil {
-		EndpointError(w, &ServiceError{
-			Message:   "Object marshal unsuppported type",
-			Solution:  "File bug report",
-			ErrorCode: http.StatusInternalServerError,
-		})
-		log.Print("FATAL: ", err)
-		return
+		log.Panic(err)
 	}
 }
 
@@ -69,27 +68,26 @@ func v1QueueCreate(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 128))
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
 	if err := r.Body.Close(); err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
-	if err := json.Unmarshal(body, &job); err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-	}
-
-	if err := json.NewEncoder(w).Encode(list); err != nil {
+	if err := json.Unmarshal(body, &queue); err != nil {
 		EndpointError(w, &ServiceError{
-			Message:   "Object marshal unsuppported type",
-			Solution:  "File bug report",
-			ErrorCode: http.StatusInternalServerError,
+			Message:   "Invalid object provided",
+			Solution:  "Correct the input structure",
+			ErrorCode: http.StatusUnprocessableEntity,
 		})
-		log.Print("FATAL: ", err)
+		return
+	}
+
+	if err := StoreQueueCreate(&queue); err != nil {
+		serr := err.(*ServiceError)
+		serr.ErrorCode = http.StatusUnprocessableEntity
+		EndpointError(w, serr)
 		return
 	}
 }
