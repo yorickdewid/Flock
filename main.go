@@ -23,9 +23,7 @@ const (
 	version = "1.0.0-dev"
 )
 
-var (
-	verbose bool
-)
+var verbose bool
 
 func acceptNewJobs(port *string) {
 	SetupStore()

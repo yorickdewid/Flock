@@ -90,6 +90,11 @@ func v1QueueCreate(w http.ResponseWriter, r *http.Request) {
 		EndpointError(w, serr)
 		return
 	}
+
+	EndpointError(w, &ServiceError{
+		Message:   "Object created",
+		ErrorCode: http.StatusCreated,
+	})
 }
 
 func v1JobStatus(w http.ResponseWriter, r *http.Request) {

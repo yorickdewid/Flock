@@ -151,7 +151,7 @@ func StoreQueueCreate(queue *Queue) error {
 	row.Scan(&count)
 	if count > 0 {
 		return &ServiceError{
-			Message:  "Name already exists",
+			Message:  "Queue with name already exists",
 			Solution: "Rename input object",
 		}
 	}
