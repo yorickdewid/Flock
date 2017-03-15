@@ -9,6 +9,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Queue struct {
+	Name       string
+	JobCount   int
+	JobsDone   int
+	JobsAwait  int
+	JobsFailed int
+}
+
 func SetupStore() {
 	// Bail if store exists
 	if _, err := os.Stat("job.store"); err == nil {
@@ -72,6 +80,39 @@ func StoreNewJob() {
 		log.Fatal(err)
 	}
 	fmt.Println(name)
+}
+
+func StoreQueueList() []Queue {
+	db, err := sql.Open("sqlite3", "job.store")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT name,jobs_count,jobs_done,jobs_await,jobs_failed FROM queue")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var queueList []Queue
+	for rows.Next() {
+		var queue Queue
+		err = rows.Scan(&queue.Name, &queue.JobCount, &queue.JobsDone, &queue.JobsAwait, &queue.JobsFailed)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		queueList = append(queueList, queue)
+		fmt.Println(len(queueList))
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return queueList
 }
 
 /*

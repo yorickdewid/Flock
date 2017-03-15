@@ -31,9 +31,22 @@ var routes = []Route{
 
 	// Endpoints for API version 1
 	Route{"v1.root", "GET", "/v1/", v1EndpointList},
+
+	Route{"v1.queue.list", "GET", "/v1/queue/list", v1QueueList},
+
 	Route{"v1.job.status", "GET", "/v1/queue.{queue}/status", v1JobStatus},
 	Route{"SubmitJob", "POST", "/v1/queue.{queue}/submit", v1JobSubmit},
 	// Route{"TodoShow", "GET", "/v1/queue.main/{todoId}", TodoShow},
+}
+
+func v1QueueList(w http.ResponseWriter, r *http.Request) {
+	// list := StoreQueueList()
+	StoreQueueList()
+
+	// if err := json.NewEncoder(w).Encode(job); err != nil {
+	// 	panic(err)
+	// }
+	w.WriteHeader(http.StatusOK)
 }
 
 func v1JobStatus(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +67,6 @@ func v1JobStatus(w http.ResponseWriter, r *http.Request) {
 		Submitted: time.Now(),
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if err := json.NewEncoder(w).Encode(job); err != nil {
 		panic(err)
 	}
@@ -164,6 +176,8 @@ func RequestHandler(inner http.Handler, name string, method string) http.Handler
 		// Set server header
 		w.Header().Add("Server", "Flock/"+version)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Cache-control", "no-cache")
+		w.Header().Set("Pragma", "no-cache")
 
 		if r.Method != method {
 			w.WriteHeader(http.StatusMethodNotAllowed)
