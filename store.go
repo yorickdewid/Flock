@@ -171,6 +171,52 @@ func StoreQueueCreate(queue *Queue) error {
 	return err
 }
 
+func StoreQueueRemove(queue *Queue) error {
+	db, err := sql.Open("sqlite3", "job.store")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Check empty input
+	queue.Name = strings.ToLower(strings.TrimSpace(queue.Name))
+	if len(queue.Name) == 0 {
+		return &ServiceError{
+			Message:  "Name is empty",
+			Solution: "Supply a name",
+		}
+	}
+
+	// Check existing name
+	row := db.QueryRow("SELECT 1 FROM queue WHERE name=? AND can_remove=1 LIMIT 1", queue.Name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var count int
+	row.Scan(&count)
+	if count == 0 {
+		return &ServiceError{
+			Message:  "Queue with name does not exist",
+			Solution: "Rename input object",
+		}
+	}
+
+	stmt, err := db.Prepare("DELETE FROM queue WHERE name=?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.Exec(queue.Name); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("remove queue: ", queue.Name)
+
+	return err
+}
+
 /*
 	////
 	tx, err := db.Begin()

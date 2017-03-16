@@ -49,6 +49,7 @@ var routes = []Route{
 
 	Route{"v1.queue.list", "GET", "/v1/queue/list", v1QueueList},
 	Route{"v1.queue.list", "POST", "/v1/queue/create", v1QueueCreate},
+	Route{"v1.queue.list", "POST", "/v1/queue/remove", v1QueueRemove},
 
 	Route{"v1.job.status", "GET", "/v1/queue.{queue}/status", v1JobStatus},
 	Route{"SubmitJob", "POST", "/v1/queue.{queue}/submit", v1JobSubmit},
@@ -94,6 +95,40 @@ func v1QueueCreate(w http.ResponseWriter, r *http.Request) {
 	EndpointError(w, &ServiceError{
 		Message:   "Object created",
 		ErrorCode: http.StatusCreated,
+	})
+}
+
+func v1QueueRemove(w http.ResponseWriter, r *http.Request) {
+	var queue Queue
+
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 128))
+	if err != nil {
+		log.Panic(err)
+	}
+
+	if err := r.Body.Close(); err != nil {
+		log.Panic(err)
+	}
+
+	if err := json.Unmarshal(body, &queue); err != nil {
+		EndpointError(w, &ServiceError{
+			Message:   "Invalid object provided",
+			Solution:  "Correct the input structure",
+			ErrorCode: http.StatusUnprocessableEntity,
+		})
+		return
+	}
+
+	if err := StoreQueueRemove(&queue); err != nil {
+		serr := err.(*ServiceError)
+		serr.ErrorCode = http.StatusUnprocessableEntity
+		EndpointError(w, serr)
+		return
+	}
+
+	EndpointError(w, &ServiceError{
+		Message:   "Object removed",
+		ErrorCode: http.StatusAccepted,
 	})
 }
 
